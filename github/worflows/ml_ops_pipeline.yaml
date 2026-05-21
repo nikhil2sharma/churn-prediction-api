@@ -1,0 +1,131 @@
+# .github/workflows/mlops_pipeline.yml
+name: MLOps Full Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  # ─────────────────────────────────────────
+  # TRAIN — Chef learns new recipes
+  # ─────────────────────────────────────────
+  train:
+    name: 🍳 Train Model
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Train the model
+        run: python ml/train.py
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: trained-model
+          path: model.pkl
+
+  # ─────────────────────────────────────────
+  # TEST — Health inspector checks the chef
+  # ─────────────────────────────────────────
+  test:
+    name: 🔍 Run Tests
+    runs-on: ubuntu-latest
+    needs: train          # Can't test until chef is trained
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download trained model
+        uses: actions/download-artifact@v3
+        with:
+          name: trained-model
+
+      - name: Run model tests
+        run: pytest tests/test_model.py -v
+
+      - name: Run API tests
+        run: pytest tests/test_api.py -v
+
+      - name: Check minimum accuracy gate
+        run: |
+          python -c "
+          import pickle, numpy as np
+          from sklearn.metrics import accuracy_score
+          import pandas as pd
+
+          model = pickle.load(open('model.pkl','rb'))
+          df = pd.read_csv('data/customer_churn.csv')
+          X = df.drop('churned', axis=1)
+          y = df['churned']
+          acc = accuracy_score(y, model.predict(X))
+          print(f'Accuracy: {acc}')
+          assert acc >= 0.80, f'RAILWAY BLOCKED: Accuracy {acc} below 0.80 threshold'
+          print('Health inspector approved!')
+          "
+
+  # ─────────────────────────────────────────
+  # DEPLOY — Chef enters the restaurant
+  # ─────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy FastAPI
+    runs-on: ubuntu-latest
+    needs: test           # Can't deploy until tests pass
+    if: github.ref == 'refs/heads/main'   # Only deploy from main branch
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download trained model
+        uses: actions/download-artifact@v3
+        with:
+          name: trained-model
+
+      - name: Build Docker image
+        run: docker build -t churn-api:latest .
+
+      - name: Deploy to server
+        run: |
+          echo "Deploying FastAPI to production..."
+          # In real life: docker push, kubectl apply, or SSH deploy
+          # e.g: ssh user@server 'docker pull && docker-compose up -d'
+
+  # ─────────────────────────────────────────
+  # MONITOR — Village watchman checks health
+  # ─────────────────────────────────────────
+  monitor:
+    name: 📊 Post-Deploy Health Check
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: Ping health endpoint
+        run: |
+          curl -f https://your-api-server.com/health || exit 1
+          echo "Restaurant is open and chef is responding!"
+
+      - name: Test live prediction
+        run: |
+          curl -X POST https://your-api-server.com/predict \
+            -H "Content-Type: application/json" \
+            -d '{"age":35,"contract_type":1,"monthly_charges":200.0,"support_calls":3}'
