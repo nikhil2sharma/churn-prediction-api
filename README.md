@@ -1,6 +1,6 @@
 # churn-api
 
-[![CI](https://github.com/nikhil2sharma/ML-Supervised_Learning-Test_Linear_Reg/actions/workflows/ci.yml/badge.svg)](https://github.com/nikhil2sharma/ML-Supervised_Learning-Test_Linear_Reg/actions/workflows/ci.yml)
+[![CI](https://github.com/nikhil2sharma/churn-prediction-api/actions/workflows/ci.yml/badge.svg)](https://github.com/nikhil2sharma/churn-prediction-api/actions/workflows/ci.yml)
 
 An end-to-end churn prediction service: a scikit-learn training pipeline with a
 quality gate, and a FastAPI app that serves the model. Runs locally with `uv` or
