@@ -1,4 +1,4 @@
-# churn-api
+# churn-prediction-api
 
 [![CI](https://github.com/nikhil2sharma/churn-prediction-api/actions/workflows/ci.yml/badge.svg)](https://github.com/nikhil2sharma/churn-prediction-api/actions/workflows/ci.yml)
 
@@ -55,6 +55,20 @@ make_dataset() ──► train/test split ──► RandomForest ──► quali
   instead of crashing.
 - **Validation**: Pydantic rejects out-of-range input (e.g. `age < 18`,
   `contract_type` not 0/1) with `422`.
+
+## Results
+
+From a default run of `uv run churn-train` (2,000 synthetic customers, 80/20 split, seed 42):
+
+| Metric | Value |
+| --- | --- |
+| ROC AUC | **0.823** |
+| Accuracy | **78.5%** |
+| Majority-class baseline | 72.0% |
+
+The baseline is reported next to accuracy on purpose: with 72% of customers not
+churning, a model that always predicts "no churn" already scores 72%, so AUC is
+the metric the quality gate checks.
 
 ## API
 
