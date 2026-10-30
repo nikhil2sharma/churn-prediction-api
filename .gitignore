@@ -1,27 +1,34 @@
-# Virtual environment
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual envs
 .venv/
 venv/
-env/
 
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Pytest cache
+# Tooling caches
 .pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Model binaries (large files — regenerate with train.py)
-*.pkl
+# Secrets and local config
+.env
+.env.*
+!.env.example
+*.pem
+*.key
 
-# Data files
-*.csv
-
-# IDE
+# Editors / OS
 .vscode/
 .idea/
-
-# OS
 .DS_Store
 Thumbs.db
+
+# Trained models (rebuild with churn-train)
+models/
+*.joblib
+*.pkl
